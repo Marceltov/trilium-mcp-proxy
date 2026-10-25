@@ -15,7 +15,9 @@ reset_db() {
       -R "$(id -u):$(id -g)" /home/node/trilium-data
   fi
   git checkout -- fixture/trilium-data/
-  git clean -fdq fixture/trilium-data/
+  # A killed run leaves SQLite's WAL next to the restored DB, and Trilium would replay it on start.
+  # They're ignored files, so git clean wouldn't remove them.
+  rm -f fixture/trilium-data/document.db-wal fixture/trilium-data/document.db-shm
 }
 
 cleanup() {
