@@ -1,7 +1,9 @@
 """Transparent, streaming forwarding of /mcp to Trilium's built-in MCP server.
 
 Only the Authorization header changes (to the client's ETAPI token). Bodies, methods, the query string
-and the remaining headers pass through, and responses stream back chunk by chunk as they arrive.
+and the remaining headers pass through, and responses stream back chunk by chunk as they arrive. The
+one exception: with instructions configured, the (small) response to `initialize` is read whole so the
+instructions can be added to it (see inject.py).
 """
 
 import asyncio
@@ -10,6 +12,8 @@ import json
 import logging
 
 import httpx
+
+from trilium_mcp_proxy.inject import inject_instructions
 
 log = logging.getLogger("trilium_mcp_proxy")
 
@@ -39,6 +43,15 @@ async def _read_body(receive) -> bytes:
             return b"".join(chunks)
 
 
+def _is_initialize(body: bytes) -> bool:
+    """A single JSON-RPC initialize request (not a batch, not invalid JSON)."""
+    try:
+        message = json.loads(body)
+    except ValueError:
+        return False
+    return isinstance(message, dict) and message.get("method") == "initialize"
+
+
 async def _json(send, status: int, obj: dict) -> None:
     body = json.dumps(obj).encode()
     await send({"type": "http.response.start", "status": status,
@@ -50,8 +63,9 @@ class Forwarder:
     """Pure ASGI app for /mcp. Expects scope["user"] from the auth middleware, carrying the grant
     {"etapi_token": …} in its access token's claims (mcp-login-oauth)."""
 
-    def __init__(self, upstream: httpx.AsyncClient):
+    def __init__(self, upstream: httpx.AsyncClient, instructions: str | None = None):
         self.upstream = upstream
+        self.instructions = instructions
 
     async def __call__(self, scope, receive, send):
         token = scope["user"].access_token.claims["grant"]["etapi_token"]
@@ -72,9 +86,21 @@ class Forwarder:
             await _json(send, 502, {"error": "Trilium is unreachable"})
             return
         try:
-            await self._stream(response, receive, send)
+            if self.instructions and _is_initialize(body):
+                await self._rewritten(response, send)
+            else:
+                await self._stream(response, receive, send)
         finally:
             await response.aclose()
+
+    async def _rewritten(self, response: httpx.Response, send) -> None:
+        await response.aread()  # decoded, so content-encoding goes and content-length is ours
+        body = inject_instructions(response.content, response.headers.get("content-type", ""), self.instructions)
+        drop = HOP_BY_HOP | _connection_listed(response.headers.raw) | {"content-length", "content-encoding"}
+        headers = [(k, v) for k, v in response.headers.raw if k.decode("latin-1").lower() not in drop]
+        await send({"type": "http.response.start", "status": response.status_code,
+                    "headers": [*headers, (b"content-length", str(len(body)).encode())]})
+        await send({"type": "http.response.body", "body": body})
 
     async def _stream(self, response: httpx.Response, receive, send) -> None:
         resp_drop = HOP_BY_HOP | _connection_listed(response.headers.raw)
