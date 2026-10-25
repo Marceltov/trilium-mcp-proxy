@@ -1,0 +1,4 @@
+# Runtime output of the fixture Trilium; only config.ini and document.db are the seed.
+trilium-data/*
+!trilium-data/config.ini
+!trilium-data/document.db

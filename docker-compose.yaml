@@ -1,0 +1,19 @@
+# Dev stack for the live tests (run-tests.sh). Disposable fixture Trilium + the proxy built from here.
+services:
+  trilium:
+    # Pinned to production's version, so the committed DB is never migrated by a pull.
+    image: triliumnext/trilium:v0.106.1
+    ports:
+      - "9290:8080"
+    volumes:
+      - ./fixture/trilium-data:/home/node/trilium-data
+  proxy:
+    build: .
+    depends_on: [trilium]
+    environment:
+      TRILIUM_SERVER_URL: http://trilium:8080
+      MCP_BASE_URL: http://localhost:9291
+      MCP_OAUTH_SECRET: dev-only-proxy-secret
+      MCP_INSTRUCTIONS: Fixture house rules.
+    ports:
+      - "9291:8081"
