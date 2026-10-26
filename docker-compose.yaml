@@ -17,3 +17,16 @@ services:
       MCP_INSTRUCTIONS: Fixture house rules.
     ports:
       - "9291:8081"
+  proxy-multi:
+    # The same image with two instances (both the fixture Trilium), for tests/live/test_live_multi.py.
+    build: .
+    depends_on: [trilium]
+    environment:
+      TRILIUM_INSTANCES: |
+        notes=http://trilium:8080
+        other=http://trilium:8080
+      MCP_BASE_URL: http://localhost:9292
+      MCP_OAUTH_SECRET: dev-only-proxy-secret
+      MCP_INSTRUCTIONS_NOTES: Notes house rules.
+    ports:
+      - "9292:8081"
