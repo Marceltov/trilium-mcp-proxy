@@ -4,12 +4,16 @@ All configuration is environment variables.
 
 | Variable | Default | Meaning |
 |---|---|---|
-| `TRILIUM_SERVER_URL` | required | Trilium Notes as the proxy reaches it, e.g. `http://trilium:8080` |
+| `TRILIUM_SERVER_URL` | required¹ | Trilium Notes as the proxy reaches it, e.g. `http://trilium:8080`; served at `/mcp` |
+| `TRILIUM_INSTANCES` | required¹ | Several instances, one `name=url` per line or comma; each served at `/<name>/mcp`. See [Several instances](multiple-instances.md) |
 | `MCP_BASE_URL` | required | Public URL of the proxy; also the OAuth issuer (`https`, or `http` only for localhost) |
 | `MCP_OAUTH_SECRET` | required | Encrypts the stored logins in `/data`; changing it logs every client out |
 | `MCP_INSTRUCTIONS` | unset | Added to Trilium's `initialize` result as `instructions` |
+| `MCP_INSTRUCTIONS_<NAME>` | unset | With `TRILIUM_INSTANCES`: one instance's instructions instead of `MCP_INSTRUCTIONS` (name uppercased, `-` as `_`) |
 | `MCP_PORT` | `8081` | Port the proxy listens on inside the container |
 | `LOG_LEVEL` | `INFO` | Python log level |
+
+¹ Exactly one of `TRILIUM_SERVER_URL` and `TRILIUM_INSTANCES`.
 
 A missing or invalid required variable stops the container at startup with a message naming it.
 
@@ -31,6 +35,6 @@ Mount a volume at `/data`. It holds the OAuth store (registered clients, refresh
 
 | Path | What |
 |---|---|
-| `/mcp` | Trilium's MCP server, behind the login |
+| `/mcp` | Trilium's MCP server, behind the login (with several instances: `/<name>/mcp`) |
 | `/health` | `{"status": "ok", "trilium": "ok" \| "unreachable"}`, no login needed |
 | `/.well-known/…`, `/authorize`, `/token`, `/register`, `/revoke` and the login page | The OAuth endpoints MCP clients find and use on their own |

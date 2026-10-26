@@ -13,6 +13,7 @@ nav:
   - Home: index.md
   - Quick start: getting-started.md
   - Connect a client: connecting.md
+  - Several instances: multiple-instances.md
   - Configuration: configuration.md
   - Security: security.md
   - How it works: how-it-works.md

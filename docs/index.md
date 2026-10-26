@@ -23,6 +23,7 @@ The proxy is a convenience on top. It adds the login every MCP client already kn
 - **Trilium's own tools, unchanged.** Every `/mcp` request goes to Trilium as it is, with only `Authorization` swapped for that client's ETAPI token. New tools from a Trilium update appear without a proxy release.
 - **One token per client.** Each login creates its own ETAPI token, listed in Trilium under *Options → ETAPI*. Delete it there and that client is cut off.
 - **House rules.** With `MCP_INSTRUCTIONS` set, every client gets your standing instructions when it connects.
+- **Several instances, one proxy.** Serve each Trilium at its own path with its own login: see [Several instances](multiple-instances.md).
 - **Tokens still work.** A client configured with an ETAPI token can send it through the proxy as before.
 
 ## What it isn't

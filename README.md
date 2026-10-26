@@ -44,6 +44,7 @@ that Trilium has its own.
 
 - [Quick start](https://trilium-mcp-proxy.marceltov.de/getting-started/): turn on Trilium's MCP server, add the proxy, publish it over HTTPS
 - [Connect a client](https://trilium-mcp-proxy.marceltov.de/connecting/): claude.ai and the Claude apps, Claude Code, other MCP clients
+- [Several instances](https://trilium-mcp-proxy.marceltov.de/multiple-instances/): one proxy, one path and login per Trilium
 - [Configuration](https://trilium-mcp-proxy.marceltov.de/configuration/), [security](https://trilium-mcp-proxy.marceltov.de/security/) and [how it works](https://trilium-mcp-proxy.marceltov.de/how-it-works/)
 
 ## Run it
@@ -80,11 +81,27 @@ Put it behind a TLS reverse proxy at `MCP_BASE_URL`. `GET /health` answers
 
 | Variable | Default | Meaning |
 |---|---|---|
-| `TRILIUM_SERVER_URL` | required | Trilium Notes as the proxy reaches it, e.g. `http://trilium:8080` |
+| `TRILIUM_SERVER_URL` | required¹ | Trilium Notes as the proxy reaches it, e.g. `http://trilium:8080`; served at `/mcp` |
+| `TRILIUM_INSTANCES` | required¹ | Several instances, one `name=url` per line or comma; each at `/<name>/mcp` with its own login |
 | `MCP_BASE_URL` | required | Public URL of the proxy; also the OAuth issuer (`https`, or `http` only for localhost) |
 | `MCP_OAUTH_SECRET` | required | Encrypts the stored logins in `/data`; changing it logs every client out |
 | `MCP_INSTRUCTIONS` | unset | Added to Trilium's `initialize` result as `instructions` |
+| `MCP_INSTRUCTIONS_<NAME>` | unset | One instance's instructions instead of `MCP_INSTRUCTIONS` |
 | `MCP_PORT` | `8081` | |
+
+¹ Exactly one of the two.
+
+### Several instances
+
+One proxy can serve several Trilium instances, each at its own path with its own login, issuer and stored logins; a token from one is refused by the others:
+
+```yaml
+      TRILIUM_INSTANCES: |
+        marcel=http://trilium-marcel:8080
+        shared=http://trilium-shared:8080
+```
+
+Clients then connect to `https://<your proxy>/marcel/mcp` and `https://<your proxy>/shared/mcp`. `/health` lists every instance. Details: [Several instances](https://trilium-mcp-proxy.marceltov.de/multiple-instances/).
 
 ## Connect a client
 
