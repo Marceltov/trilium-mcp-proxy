@@ -1,6 +1,6 @@
 # Connect a client
 
-Every client gets the same URL, the proxy's `MCP_BASE_URL` plus `/mcp`, for example `https://trilium-mcp-proxy.example.org/mcp`. The first time, the client opens the proxy's login page in your browser; enter your Trilium Notes password. After that the client refreshes its tokens on its own.
+Every client gets the same URL, the proxy's `MCP_BASE_URL` plus `/mcp`, for example `https://trilium-mcp-proxy.example.org/mcp`. The first time, the client opens the proxy's login page in your browser; enter your Trilium Notes password, plus your TOTP code (or a recovery code) if two-factor login is on. After that the client refreshes its tokens on its own.
 
 === "claude.ai and the Claude apps"
 

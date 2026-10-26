@@ -30,12 +30,31 @@ MCP_PATH = "/mcp"
 TOKEN_PREFIX = "tmpx_"
 
 
+# Trilium's ETAPI error codes for a login, as the user should read them.
+_LOGIN_ERRORS = {
+    "WRONG_PASSWORD": "Wrong password.",
+    "TOTP_REQUIRED": "Two-factor login is on: enter your TOTP code as well.",
+    "WRONG_TOTP": "Wrong TOTP code.",
+}
+
+
+def _rejection(r: httpx.Response) -> str:
+    try:
+        code = r.json().get("code")
+    except ValueError:
+        code = None
+    return _LOGIN_ERRORS.get(code) or f"Trilium rejected the login (HTTP {r.status_code})."
+
+
 def build_provider(config: Config, trilium: httpx.AsyncClient, store_dir: Path, **overrides) -> LoginOAuthProvider:
     async def check_login(form) -> dict:
-        # The password goes straight to Trilium and is never stored or logged.
-        r = await trilium.post("/etapi/auth/login", json={"password": form["password"]})
+        # The password and TOTP code go straight to Trilium and are never stored or logged.
+        body = {"password": form["password"]}
+        if totp := form.get("totp", "").strip():
+            body["totpToken"] = totp
+        r = await trilium.post("/etapi/auth/login", json=body)
         if not r.is_success:
-            raise LoginRejected(f"Trilium rejected the login (HTTP {r.status_code}).")
+            raise LoginRejected(_rejection(r))
         return {"etapi_token": r.json()["authToken"]}
 
     async def on_revoke(grant: dict) -> None:
@@ -47,7 +66,9 @@ def build_provider(config: Config, trilium: httpx.AsyncClient, store_dir: Path, 
     args = dict(base_url=config.base_url,
                 store=build_store(store_dir, secret=config.oauth_secret, salt="trilium-mcp-proxy-oauth"),
                 service_name="Trilium Notes",
-                fields=[LoginField("password", "Trilium password", type="password", required=True)],
+                fields=[LoginField("password", "Trilium password", type="password", required=True),
+                        LoginField("totp", "TOTP code or recovery code (if two-factor login is on)",
+                                   autocomplete="one-time-code")],
                 check_login=check_login, on_revoke=on_revoke, verify_static=verify_static,
                 token_prefix=TOKEN_PREFIX)
     return LoginOAuthProvider(**{**args, **overrides})
