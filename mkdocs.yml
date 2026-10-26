@@ -1,0 +1,73 @@
+site_name: trilium-mcp-proxy
+site_description: "OAuth login for Trilium Notes' built-in MCP server: connect any MCP client by URL and sign in with your Trilium Notes password, which never leaves your server."
+site_url: https://trilium-mcp-proxy.marceltov.de/
+repo_url: https://github.com/Marceltov/trilium-mcp-proxy
+repo_name: Marceltov/trilium-mcp-proxy
+edit_uri: edit/main/docs/
+copyright: Copyright &copy; 2026 Marcel Bruckner. Licensed under <a href="https://github.com/Marceltov/trilium-mcp-proxy/blob/main/LICENSE">AGPL-3.0-or-later</a>
+
+exclude_docs: |
+  adr/
+
+nav:
+  - Home: index.md
+  - Quick start: getting-started.md
+  - Connect a client: connecting.md
+  - Configuration: configuration.md
+  - Security: security.md
+  - How it works: how-it-works.md
+
+theme:
+  name: material
+  logo: trilium.svg
+  favicon: trilium.svg
+  font:
+    text: Atkinson Hyperlegible Next
+    code: Atkinson Hyperlegible Mono
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  features:
+    - navigation.sections
+    - navigation.instant
+    - navigation.footer
+    - navigation.top
+    - toc.follow
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.tabs.link
+    - content.action.edit
+
+extra_css:
+  - stylesheets/extra.css
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
