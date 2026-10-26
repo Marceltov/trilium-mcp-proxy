@@ -10,12 +10,18 @@
 </p>
 
 An OAuth front for the MCP server that [Trilium Notes](https://triliumnotes.org) 0.106+ has built in
-at `/mcp`. Trilium's MCP server only accepts an ETAPI token in the `Authorization` header, which
-claude.ai's connector (and the Claude desktop and mobile apps) can't send: they only do OAuth.
+at `/mcp`. On its own, Trilium's MCP server takes an ETAPI token in the `Authorization` header, so
+every client needs a token created under *Options → ETAPI* and pasted into its configuration.
 
-The proxy adds the missing login:
+The proxy is a convenience on top: you add its URL to any MCP client (claude.ai, Claude Code, the
+Claude desktop and mobile apps, …) and log in once with your Trilium password. No token to create,
+paste or rotate.
 - **Login:** a client logs in once in the browser with the **Trilium password**, which creates an ETAPI
   token for that client. The client then only holds opaque OAuth tokens that refresh on their own.
+- **Your password stays on your server:** the proxy runs next to Trilium and the login page is its
+  own. The password goes only from your browser to that page and on to your Trilium's
+  `/etapi/auth/login`; the proxy never stores or logs it. The MCP client (claude.ai included) never
+  sees it, only opaque OAuth tokens that work nowhere but your proxy.
 - **Forwarding:** every `/mcp` request goes **unchanged** to Trilium, with only `Authorization` swapped
   for that client's ETAPI token. Responses stream back as they arrive. The tools are exactly Trilium's
   own, so new ones from a Trilium update appear without a proxy release.
@@ -25,8 +31,9 @@ The proxy adds the missing login:
   or without `Bearer`, and it's forwarded as is.
 - **Revocation:** revoking a client's login logs its ETAPI token out in Trilium.
 
-The login comes from [mcp-login-oauth](https://github.com/Marceltov/mcp-login-oauth). For an MCP server
-with tools generated from the full ETAPI, see [trilium-mcp](https://github.com/Marceltov/trilium-mcp).
+The login comes from [mcp-login-oauth](https://github.com/Marceltov/mcp-login-oauth). It replaces
+[trilium-mcp](https://github.com/Marceltov/trilium-mcp), an ETAPI-based MCP server that is archived now
+that Trilium has its own.
 
 ## Run it
 
