@@ -1,6 +1,9 @@
 # trilium-mcp-proxy
 
 <p>
+  <a href="https://trilium-mcp-proxy.marceltov.de/">
+    <img alt="Documentation" src="https://img.shields.io/badge/docs-trilium--mcp--proxy.marceltov.de-2f7a27">
+  </a>
   <a href="https://github.com/Marceltov/trilium-mcp-proxy/pkgs/container/trilium-mcp-proxy">
     <img alt="GHCR image" src="https://img.shields.io/github/v/release/Marceltov/trilium-mcp-proxy?logo=docker&logoColor=white&label=ghcr.io%2Fmarceltov%2Ftrilium-mcp-proxy&color=2496ED">
   </a>
@@ -34,6 +37,14 @@ paste or rotate.
 The login comes from [mcp-login-oauth](https://github.com/Marceltov/mcp-login-oauth). It replaces
 [trilium-mcp](https://github.com/Marceltov/trilium-mcp), an ETAPI-based MCP server that is archived now
 that Trilium has its own.
+
+## Documentation
+
+**Full documentation: [trilium-mcp-proxy.marceltov.de](https://trilium-mcp-proxy.marceltov.de/)**
+
+- [Quick start](https://trilium-mcp-proxy.marceltov.de/getting-started/): turn on Trilium's MCP server, add the proxy, publish it over HTTPS
+- [Connect a client](https://trilium-mcp-proxy.marceltov.de/connecting/): claude.ai and the Claude apps, Claude Code, other MCP clients
+- [Configuration](https://trilium-mcp-proxy.marceltov.de/configuration/), [security](https://trilium-mcp-proxy.marceltov.de/security/) and [how it works](https://trilium-mcp-proxy.marceltov.de/how-it-works/)
 
 ## Run it
 
