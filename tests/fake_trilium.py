@@ -23,6 +23,8 @@ class State:
     canned_type: str = "text/event-stream"
     canned_chunks: int = 1
     reject_tokens: set[str] = field(default_factory=lambda: {"bad"})
+    totp: str | None = None  # the code two-factor login expects; None: two-factor login is off
+    login_bodies: list[dict] = field(default_factory=list)
 
 
 def build_fake(state: State) -> Starlette:
@@ -54,8 +56,18 @@ def build_fake(state: State) -> Starlette:
                              "headers": dict(request.headers), "body": body.decode()})
 
     async def login(request: Request) -> Response:
-        if (await request.json()).get("password") != "pw":
-            return JSONResponse({"message": "Wrong password"}, status_code=401)
+        # Error bodies and order as Trilium's etapi/auth.ts: TOTP presence first, then password, then code.
+        body = await request.json()
+        state.login_bodies.append(body)
+        if state.totp and not body.get("totpToken"):
+            return JSONResponse({"status": 401, "code": "TOTP_REQUIRED", "message": "TOTP token is required."},
+                                status_code=401)
+        if body.get("password") != "pw":
+            return JSONResponse({"status": 401, "code": "WRONG_PASSWORD", "message": "Wrong password."},
+                                status_code=401)
+        if state.totp and body["totpToken"] != state.totp:
+            return JSONResponse({"status": 401, "code": "WRONG_TOTP", "message": "Wrong TOTP token."},
+                                status_code=401)
         state.minted += 1
         return JSONResponse({"authToken": f"etapi-{state.minted}"}, status_code=201)
 

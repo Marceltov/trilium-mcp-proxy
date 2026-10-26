@@ -45,9 +45,9 @@ def start_login(http) -> tuple[str, str, str]:
     return client_id, httpx.URL(r.headers["location"]).params["id"], verifier
 
 
-def login(http, password="pw") -> dict:
+def login(http, password="pw", **extra) -> dict:
     client_id, pending, verifier = start_login(http)
-    r = http.post("/login", data={"id": pending, "password": password}, follow_redirects=False)
+    r = http.post("/login", data={"id": pending, "password": password, **extra}, follow_redirects=False)
     code = httpx.URL(r.headers["location"]).params["code"]
     tokens = http.post("/token", data={"grant_type": "authorization_code", "code": code, "redirect_uri": REDIRECT,
                                        "client_id": client_id, "code_verifier": verifier}).json()
@@ -71,7 +71,28 @@ def test_oauth_login_then_forward(client):
 def test_wrong_password_shows_trilium_rejection(client):
     _, pending, _ = start_login(client)
     r = client.post("/login", data={"id": pending, "password": "nope"}, follow_redirects=False)
-    assert r.status_code == 401 and "Trilium rejected the login (HTTP 401)." in r.text
+    assert r.status_code == 401 and "Wrong password." in r.text
+
+
+def test_login_without_totp_sends_no_totp_token(client, trilium):
+    login(client, totp="")
+    assert trilium[1].login_bodies == [{"password": "pw"}]
+
+
+def test_totp_code_reaches_trilium(client, trilium):
+    trilium[1].totp = "123456"
+    tokens = login(client, totp=" 123456 ")
+    assert trilium[1].login_bodies == [{"password": "pw", "totpToken": "123456"}]
+    assert mcp(client, f"Bearer {tokens['access_token']}").status_code == 200
+
+
+@pytest.mark.parametrize("totp, message", [("", "Two-factor login is on: enter your TOTP code as well."),
+                                           ("000000", "Wrong TOTP code.")])
+def test_totp_rejections_say_what_is_missing(client, trilium, totp, message):
+    trilium[1].totp = "123456"
+    _, pending, _ = start_login(client)
+    r = client.post("/login", data={"id": pending, "password": "pw", "totp": totp}, follow_redirects=False)
+    assert r.status_code == 401 and message in r.text
 
 
 def test_mcp_without_token_is_401_with_resource_metadata(client):
@@ -115,6 +136,7 @@ def test_login_page_names_trilium(client):
     _, pending, _ = start_login(client)
     page = client.get("/login", params={"id": pending}).text
     assert "Trilium Notes login" in page and "Trilium password" in page
+    assert 'name="totp"' in page and 'autocomplete="one-time-code"' in page
 
 
 def test_initialize_gets_instructions_through_the_app(client, trilium):

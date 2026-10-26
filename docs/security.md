@@ -7,6 +7,7 @@ Only to your own servers. The login page is served by the proxy, which you run n
 1. The MCP client (say claude.ai) sends your browser to the proxy's `/authorize` page.
 2. You type the Trilium Notes password there. The browser posts it to the proxy, over your HTTPS.
 3. The proxy posts it to Trilium's `/etapi/auth/login` and gets back a new ETAPI token for this client. The password is not stored and not logged.
+   With two-factor login on, the TOTP code (or a recovery code) goes along the same way. Trilium checks it on ETAPI logins from the release after 0.106.1 on; older versions accept the password alone.
 4. The client receives an authorization code and trades it for opaque OAuth tokens. Those tokens mean nothing outside your proxy.
 
 The MCP client never sees the password and never sees the ETAPI token.

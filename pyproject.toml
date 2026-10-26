@@ -1,6 +1,6 @@
 [project]
 name = "trilium-mcp-proxy"
-version = "0.1.0"
+version = "0.1.1"
 description = "OAuth front for Trilium Notes' built-in MCP server, for clients that can't send a token header"
 readme = "README.md"
 license = "AGPL-3.0-or-later"
