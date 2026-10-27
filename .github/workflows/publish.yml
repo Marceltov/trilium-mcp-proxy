@@ -3,7 +3,7 @@ name: publish
 # Build the image and push it to GHCR as ghcr.io/<owner>/trilium-mcp-proxy (built-in GITHUB_TOKEN).
 #
 #   push to main -> :main            (a testable image; latest is NOT moved)
-#   v* tag push  -> :1.2.3/:1.2/:1 + :latest, plus a GitHub release
+#   v* tag push  -> :1.2.3/:1.2/:1 + :latest, a GitHub release and a notefeed post
 #
 # A v* tag must equal pyproject.toml's version.
 
@@ -83,3 +83,24 @@ jobs:
           notes="Image: \`ghcr.io/marceltov/trilium-mcp-proxy:${TAG#v}\`. Setup: see the README."
           gh release view "$TAG" >/dev/null 2>&1 && gh release edit "$TAG" --title "$TAG" --notes "$notes" \
             || gh release create "$TAG" --title "$TAG" --notes "$notes" --verify-tag
+
+      # Posts the release notes to the notefeed feed for the Trilium projects. Skipped
+      # without the secrets (forks); a re-run doesn't post twice, the tag <repo>-vX.Y.Z
+      # on the note is what the check looks for.
+      - name: Post the notes to notefeed
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+          NOTEFEED_URL: https://notefeed.me
+          NOTEFEED_FEED: ${{ secrets.NOTEFEED_FEED }}
+          NOTEFEED_FEED_PASSWORD: ${{ secrets.NOTEFEED_FEED_PASSWORD }}
+        run: |
+          [ -n "$NOTEFEED_FEED" ] || { echo "No NOTEFEED_FEED secret, not posting"; exit 0; }
+          repo=${GITHUB_REPOSITORY#*/}
+          feed="$NOTEFEED_URL/api/v1/feeds/$NOTEFEED_FEED/notes"
+          posted=$(curl -fsS -H "X-Feed-Password: $NOTEFEED_FEED_PASSWORD" "$feed?tag=$repo-$TAG&limit=1" | jq '.notes | length')
+          [ "$posted" = 0 ] || { echo "$repo $TAG is already on notefeed"; exit 0; }
+          gh release view "$TAG" --json body,url --jq '.body + "\n\n[The release on GitHub](" + .url + ")\n"' > notefeed.md
+          curl -fsS -o /dev/null -H "Content-Type: text/markdown" -H "X-Feed-Password: $NOTEFEED_FEED_PASSWORD" \
+            -H "X-Note-Title: $repo ${TAG#v}" -H "X-Note-Tags: release,$repo,$repo-$TAG" \
+            --data-binary @notefeed.md "$feed"
