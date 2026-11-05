@@ -1,13 +1,14 @@
 import asyncio
 import base64
 import hashlib
+import json
 import secrets
 
 import httpx
 from fastmcp import Client
 from fastmcp.client.transports import StreamableHttpTransport
 
-from tests.live.conftest import PASSWORD, PROXY
+from tests.live.conftest import PASSWORD, PROXY, TRILIUM
 
 REDIRECT = "http://localhost:9/cb"
 
@@ -77,3 +78,31 @@ def test_revoke_then_401():
                                           "client_id": tokens["client_id"]}).status_code == 200
         r = http.post("/mcp", json={}, headers={"Authorization": f"Bearer {tokens['access_token']}"})
         assert r.status_code == 401
+
+
+def test_note_written_through_proxy_gets_its_links():
+    # get_attributes leaves out internalLink relations, so they're read over ETAPI.
+    with httpx.Client(base_url=PROXY, timeout=30) as http:
+        tokens = login(http)
+    with httpx.Client(base_url=TRILIUM, timeout=30) as etapi:
+        etapi.headers["Authorization"] = etapi.post("/etapi/auth/login", json={"password": PASSWORD}).json()["authToken"]
+
+        def links(note_id: str) -> list[str]:
+            attributes = etapi.get(f"/etapi/notes/{note_id}").json()["attributes"]
+            return [a["value"] for a in attributes if a["type"] == "relation" and a["name"] == "internalLink"]
+
+        async def write(c):
+            async def call(name, **arguments):
+                return json.loads((await c.call_tool(name, arguments)).content[0].text)
+            target = (await call("create_note", parentNoteId="root", title="Link target", type="text",
+                                 content="target"))["noteId"]
+            source = (await call("create_note", parentNoteId="root", title="Link source", type="text",
+                                 content=f"See [the target](#root/{target})."))["noteId"]
+            created = links(source)
+            await call("set_note_content", noteId=source, content="No links any more.")
+            replaced = links(source)
+            await call("append_to_note", noteId=source, content=f"Back to [it](#root/{target}).")
+            return target, created, replaced, links(source)
+
+        target, created, replaced, appended = session(tokens["access_token"], write)
+    assert created == [target] and replaced == [] and appended == [target]

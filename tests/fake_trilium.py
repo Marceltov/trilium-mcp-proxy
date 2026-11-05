@@ -25,6 +25,9 @@ class State:
     reject_tokens: set[str] = field(default_factory=lambda: {"bad"})
     totp: str | None = None  # the code two-factor login expects; None: two-factor login is off
     login_bodies: list[dict] = field(default_factory=list)
+    # ETAPI note contents by noteId, and the (method, noteId, authorization) of each content request.
+    contents: dict[str, bytes] = field(default_factory=dict)
+    content_calls: list[tuple[str, str, str]] = field(default_factory=list)
 
 
 def build_fake(state: State) -> Starlette:
@@ -75,12 +78,23 @@ def build_fake(state: State) -> Starlette:
         state.logged_out.append(request.headers.get("authorization", ""))
         return Response(status_code=204)
 
+    async def content(request: Request) -> Response:
+        note_id = request.path_params["noteId"]
+        state.content_calls.append((request.method, note_id, request.headers.get("authorization", "")))
+        if note_id not in state.contents:
+            return JSONResponse({"code": "NOTE_NOT_FOUND"}, status_code=404)
+        if request.method == "PUT":
+            state.contents[note_id] = await request.body()
+            return Response(status_code=204)
+        return Response(state.contents[note_id], media_type="text/html")
+
     async def health(_: Request) -> Response:
         return JSONResponse({"status": "ok"}) if state.healthy else Response(status_code=503)
 
     return Starlette(routes=[Route("/mcp", mcp, methods=["GET", "POST", "DELETE"]),
                              Route("/etapi/auth/login", login, methods=["POST"]),
                              Route("/etapi/auth/logout", logout, methods=["POST"]),
+                             Route("/etapi/notes/{noteId}/content", content, methods=["GET", "PUT"]),
                              Route("/api/health-check", health)])
 
 
