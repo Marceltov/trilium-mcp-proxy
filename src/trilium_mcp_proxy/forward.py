@@ -1,9 +1,10 @@
 """Transparent, streaming forwarding of /mcp to Trilium's built-in MCP server.
 
 Only the Authorization header changes (to the client's ETAPI token). Bodies, methods, the query string
-and the remaining headers pass through, and responses stream back chunk by chunk as they arrive. The
-one exception: with instructions configured, the (small) response to `initialize` is read whole so the
-instructions can be added to it (see inject.py).
+and the remaining headers pass through, and responses stream back chunk by chunk as they arrive. Two
+exceptions read the (small) response whole first: with instructions configured, the response to
+`initialize`, so the instructions can be added to it (see inject.py); and the response to a tool call
+that writes a note, so the note can be re-saved for its links before the client goes on (see relink.py).
 """
 
 import asyncio
@@ -14,6 +15,7 @@ import logging
 import httpx
 
 from trilium_mcp_proxy.inject import inject_instructions
+from trilium_mcp_proxy.relink import relink, writes_note, written_note_id
 
 log = logging.getLogger("trilium_mcp_proxy")
 
@@ -88,6 +90,8 @@ class Forwarder:
         try:
             if self.instructions and _is_initialize(body):
                 await self._rewritten(response, send)
+            elif writes_note(body):
+                await self._relinked(response, send, token)
             else:
                 await self._stream(response, receive, send)
         finally:
@@ -96,6 +100,16 @@ class Forwarder:
     async def _rewritten(self, response: httpx.Response, send) -> None:
         await response.aread()  # decoded, so content-encoding goes and content-length is ours
         body = inject_instructions(response.content, response.headers.get("content-type", ""), self.instructions)
+        await self._send_whole(response, body, send)
+
+    async def _relinked(self, response: httpx.Response, send, token: str) -> None:
+        await response.aread()
+        if response.is_success and (note_id := written_note_id(response.content,
+                                                               response.headers.get("content-type", ""))):
+            await relink(self.upstream, token, note_id)
+        await self._send_whole(response, response.content, send)
+
+    async def _send_whole(self, response: httpx.Response, body: bytes, send) -> None:
         drop = HOP_BY_HOP | _connection_listed(response.headers.raw) | {"content-length", "content-encoding"}
         headers = [(k, v) for k, v in response.headers.raw if k.decode("latin-1").lower() not in drop]
         await send({"type": "http.response.start", "status": response.status_code,

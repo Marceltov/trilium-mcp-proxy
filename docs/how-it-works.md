@@ -35,7 +35,10 @@ The login comes from [mcp-login-oauth](https://github.com/Marceltov/mcp-login-oa
 
 Every request to `/mcp` with a valid OAuth token is forwarded to Trilium's `/mcp` unchanged, with only `Authorization` replaced by that client's ETAPI token. Responses stream back as they arrive, so long tool calls and event streams stay open as long as Trilium keeps them.
 
-The one exception is the `initialize` answer: with `MCP_INSTRUCTIONS` set, the proxy adds it as `instructions`. Only that small response is read whole.
+Two exceptions are read whole before they're sent on:
+
+- The `initialize` answer: with `MCP_INSTRUCTIONS` set, the proxy adds it as `instructions`.
+- The answer to a tool call that writes a note's content (`create_note`, `set_note_content`, `append_to_note`, `edit_note_content`). Trilium's MCP tools store content without scanning it for links, so the note gets no `internalLink` relations: backlinks, the note map and `~internalLink` searches miss them. ETAPI's content upload does scan. So when such a call succeeds, the proxy reads the note's content and writes it back unchanged through ETAPI, with the client's own token, and only then answers. The client's next call already sees the links. If the re-save fails, the proxy logs it and the tool result goes out as it is. See [ADR 0002](https://github.com/Marceltov/trilium-mcp-proxy/blob/main/docs/adr/0002-resave-written-notes-for-their-links.md).
 
 A request with a raw ETAPI token instead of an OAuth token is forwarded as is, and Trilium decides whether it's valid.
 

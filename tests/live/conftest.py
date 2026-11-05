@@ -8,6 +8,7 @@ import httpx
 import pytest
 
 PROXY = "http://localhost:9291"
+TRILIUM = "http://localhost:9290"  # the fixture Trilium, for checks the MCP tools can't make
 PASSWORD = "trilium-mcp"  # the fixture's throwaway password (see fixture/README.md)
 
 
