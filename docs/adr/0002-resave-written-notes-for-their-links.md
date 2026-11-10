@@ -1,5 +1,5 @@
 ---
-status: accepted
+status: deprecated
 date: 2026-11-05
 decision-makers: Marcel Bruckner
 ---
@@ -41,3 +41,9 @@ and can be removed after that release.
   The window is the few milliseconds of one ETAPI round trip.
 * Neutral, because notes written before this change, or directly against Trilium's `/mcp`, still lack
   their links until they're saved again.
+
+## Update 2026-11-10: removed in 0.1.3
+
+Trilium v0.107.0 scans the links of what its MCP tools write
+([TriliumNext/Trilium#12487](https://github.com/TriliumNext/Trilium/pull/12487)), so the re-save is
+gone and write tool answers stream again like every other.

@@ -81,6 +81,7 @@ def test_revoke_then_401():
 
 
 def test_note_written_through_proxy_gets_its_links():
+    # Trilium's MCP tools record links since v0.107.0 (TriliumNext/Trilium#12487).
     # get_attributes leaves out internalLink relations, so they're read over ETAPI.
     with httpx.Client(base_url=PROXY, timeout=30) as http:
         tokens = login(http)
