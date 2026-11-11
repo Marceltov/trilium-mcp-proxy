@@ -21,7 +21,6 @@ The proxy is a convenience on top. It adds the login every MCP client already kn
 
 - **Your password stays on your server.** The proxy runs next to Trilium and the login page is its own. The password goes from your browser to the proxy and on to your Trilium, which trades it for an ETAPI token. The proxy never stores or logs it, and the MCP client (claude.ai included) never sees it. See [Security](security.md).
 - **Trilium's own tools, unchanged.** Every `/mcp` request goes to Trilium as it is, with only `Authorization` swapped for that client's ETAPI token. New tools from a Trilium update appear without a proxy release.
-- **Links get recorded.** Notes written through the MCP tools get their backlinks and show up in the note map: the proxy re-saves them through ETAPI, which Trilium's MCP tools don't do themselves. See [How it works](how-it-works.md#requests).
 - **One token per client.** Each login creates its own ETAPI token, listed in Trilium under *Options → ETAPI*. Delete it there and that client is cut off.
 - **House rules.** With `MCP_INSTRUCTIONS` set, every client gets your standing instructions when it connects.
 - **Tokens still work.** A client configured with an ETAPI token can send it through the proxy as before.

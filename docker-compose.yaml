@@ -2,7 +2,7 @@
 services:
   trilium:
     # Pinned to production's version, so the committed DB is never migrated by a pull.
-    image: triliumnext/trilium:v0.106.1
+    image: triliumnext/trilium:v0.107.0
     ports:
       - "9290:8080"
     volumes:

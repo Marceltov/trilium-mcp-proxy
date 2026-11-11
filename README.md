@@ -30,9 +30,6 @@ paste or rotate.
   own, so new ones from a Trilium update appear without a proxy release.
 - **House rules:** with `MCP_INSTRUCTIONS` set, the proxy adds your standing instructions to Trilium's
   `initialize` answer, which every client reads at connect. That's the only rewrite.
-- **Links get recorded:** Trilium's MCP tools don't scan what they write for links, so those notes have
-  no backlinks and are missing from the note map. After a tool writes a note, the proxy writes the
-  same content back through ETAPI, which does the scan.
 - **Header clients still work:** a client that already has an ETAPI token (Claude Code) can send it, with
   or without `Bearer`, and it's forwarded as is.
 - **Revocation:** revoking a client's login logs its ETAPI token out in Trilium.
