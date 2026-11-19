@@ -12,6 +12,9 @@
   </a>
 </p>
 
+> [!IMPORTANT]
+> **Moved to [mcp-login-proxy](https://github.com/Marceltov/mcp-login-proxy)** (docs: [mcp-login-proxy.marceltov.de](https://mcp-login-proxy.marceltov.de/)). From v0.2.0 the proxy is general: Trilium is one config file there ([`docs/examples/trilium.yaml`](https://github.com/Marceltov/mcp-login-proxy/blob/main/docs/examples/trilium.yaml)), and existing logins keep working ([moving from trilium-mcp-proxy](https://mcp-login-proxy.marceltov.de/configuration/#moving-from-trilium-mcp-proxy)). This repository is archived; its images stay on GHCR.
+
 An OAuth front for the MCP server that [Trilium Notes](https://triliumnotes.org) 0.106+ has built in
 at `/mcp`. On its own, Trilium's MCP server takes an ETAPI token in the `Authorization` header, so
 every client needs a token created under *Options → ETAPI* and pasted into its configuration.
