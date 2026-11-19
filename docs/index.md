@@ -3,6 +3,9 @@ hide:
   - toc
 ---
 
+!!! warning "Moved to mcp-login-proxy"
+    trilium-mcp-proxy became [mcp-login-proxy](https://mcp-login-proxy.marceltov.de/), a general OAuth front configured per deployment. Trilium is one config file there, and existing logins keep working. This repository is archived.
+
 <div class="tm-hero" markdown>
 
 # Sign in to Trilium Notes' MCP server with your password
